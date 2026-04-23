@@ -120,8 +120,8 @@ function AdminPlans() {
   };
 
   return (
-    <div className="p-10 space-y-8">
-      <div className="flex justify-between items-center">
+    <div className="p-4 md:p-8 space-y-8">
+      <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
         <h1 className="text-2xl font-bold">Manage Plans</h1>
         <div className="flex gap-3">
           {/* <Button variant="secondary" onClick={handleAssignBasic}>

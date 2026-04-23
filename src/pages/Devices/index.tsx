@@ -24,7 +24,7 @@ function Home() {
   }, []);
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 w-full max-w-[320px] mx-auto md:mx-0 md:max-w-full">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6 gap-4">
         <div className="">
           <p className="text-lg md:text-xl font-semibold">Devices</p>
@@ -40,11 +40,13 @@ function Home() {
 
       <Card>
         <CardContent className="p-4 md:p-6">
-          <div   className="
+          <div
+            className="
   max-w-[350px]
   md:max-w-[calc(100vw-20rem)]
   relative
-">
+"
+          >
             {/* Mobile scroll hint */}
             <div className="md:hidden absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs text-muted-foreground border">
               Scroll →

@@ -41,6 +41,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ScheduleAddPage from "./add/page";
 
 type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
@@ -305,612 +306,622 @@ function AddToSchedule() {
               <SelectItem value="ad">Advertisements</SelectItem>
               <SelectItem value="carousel">Carousels</SelectItem>
               <SelectItem value="live_content">Live Content</SelectItem>
+              <SelectItem value="screen_layouts">Screen Layouts</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:gap-6 lg:grid-cols-2 w-full">
-        {/* ✅ Select Content */}
-        <Card className="w-full min-w-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base md:text-lg">
-              Select{" "}
-              {contentType === "ad"
-                ? "Ad"
-                : contentType === "carousel"
-                  ? "Carousel"
-                  : "Live Content"}
-            </CardTitle>
-          </CardHeader>
+      {contentType !== "screen_layouts" && (
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-2 w-full">
+          {/* ✅ Select Content */}
+          <Card className="w-full min-w-0">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base md:text-lg">
+                Select{" "}
+                {contentType === "ad"
+                  ? "Ad"
+                  : contentType === "carousel"
+                    ? "Carousel"
+                    : "Live Content"}
+              </CardTitle>
+            </CardHeader>
 
-          <CardContent className="p-4 md:p-6">
-            <div className="relative">
-              {/* Mobile scroll hint */}
-              <div className="md:hidden absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs text-muted-foreground border">
-                Scroll →
-              </div>
+            <CardContent className="p-4 md:p-6">
+              <div className="relative">
+                {/* Mobile scroll hint */}
+                <div className="md:hidden absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs text-muted-foreground border">
+                  Scroll →
+                </div>
 
-              {contentType === "ad" && (
-                <DataTable
-                  data={adsData}
-                  columns={adcolumns}
-                  filters={[{ label: "Ad Name", value: "name" }]}
-                  onRowSelectionChange={handleSelectedAd}
-                  maxHeight="40vh"
-                  getRowCanSelect={(row) => {
-                    const ad = row as Ad;
-                    return (
-                      ad.status !== "pending" && ad.status !== "processing"
-                    );
-                  }}
-                />
-              )}
+                {contentType === "ad" && (
+                  <DataTable
+                    data={adsData}
+                    columns={adcolumns}
+                    filters={[{ label: "Ad Name", value: "name" }]}
+                    onRowSelectionChange={handleSelectedAd}
+                    maxHeight="40vh"
+                    getRowCanSelect={(row) => {
+                      const ad = row as Ad;
+                      return (
+                        ad.status !== "pending" && ad.status !== "processing"
+                      );
+                    }}
+                  />
+                )}
 
-              {contentType === "carousel" && (
-                <div className="space-y-3 max-h-[40vh] overflow-y-auto">
-                  {carouselsData.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      No carousel available
-                    </p>
-                  ) : (
-                    carouselsData.map((carousel) => (
-                      <div
-                        key={carousel.carousel_id}
-                        className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                          selectedCarousel?.carousel_id === carousel.carousel_id
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        }`}
-                        onClick={() => setSelectedCarousel(carousel)}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{carousel.name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {carousel.items?.length || 0} items
-                            </p>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {carousel.status === "active"
-                              ? "Active"
-                              : "Inactive"}
+                {contentType === "carousel" && (
+                  <div className="space-y-3 max-h-[40vh] overflow-y-auto">
+                    {carouselsData.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8">
+                        No carousel available
+                      </p>
+                    ) : (
+                      carouselsData.map((carousel) => (
+                        <div
+                          key={carousel.carousel_id}
+                          className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                            selectedCarousel?.carousel_id ===
+                            carousel.carousel_id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          onClick={() => setSelectedCarousel(carousel)}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-medium">{carousel.name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {carousel.items?.length || 0} items
+                              </p>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {carousel.status === "active"
+                                ? "Active"
+                                : "Inactive"}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
+                      ))
+                    )}
+                  </div>
+                )}
 
-              {contentType === "live_content" && (
-                <div className="space-y-3 max-h-[40vh] overflow-y-auto">
-                  {liveContentData.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      No live content available
-                    </p>
-                  ) : (
-                    liveContentData.map((content) => (
-                      <div
-                        key={content.live_content_id}
-                        className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                          selectedLiveContent?.live_content_id ===
-                          content.live_content_id
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        }`}
-                        onClick={() => setSelectedLiveContent(content)}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{content.name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {content.content_type} •{" "}
-                              {content.duration === 0
-                                ? "Indefinite"
-                                : `${content.duration}s`}
-                            </p>
-                          </div>
-                          <div className="flex flex-col items-end gap-1">
-                            {content.channel && (
+                {contentType === "live_content" && (
+                  <div className="space-y-3 max-h-[40vh] overflow-y-auto">
+                    {liveContentData.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8">
+                        No live content available
+                      </p>
+                    ) : (
+                      liveContentData.map((content) => (
+                        <div
+                          key={content.live_content_id}
+                          className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                            selectedLiveContent?.live_content_id ===
+                            content.live_content_id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          onClick={() => setSelectedLiveContent(content)}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-medium">{content.name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {content.content_type} •{" "}
+                                {content.duration === 0
+                                  ? "Indefinite"
+                                  : `${content.duration}s`}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              {content.channel && (
+                                <Badge
+                                  variant={
+                                    content.channel.status === "live"
+                                      ? "default"
+                                      : content.channel.status === "idle"
+                                        ? "secondary"
+                                        : "destructive"
+                                  }
+                                  className="text-xs"
+                                >
+                                  Channel: {content.channel.status}
+                                </Badge>
+                              )}
+
                               <Badge
                                 variant={
-                                  content.channel.status === "live"
+                                  content.status === "active"
                                     ? "default"
-                                    : content.channel.status === "idle"
-                                      ? "secondary"
-                                      : "destructive"
+                                    : "outline"
                                 }
                                 className="text-xs"
                               >
-                                Channel: {content.channel.status}
+                                {content.status}
                               </Badge>
-                            )}
-
-                            <Badge
-                              variant={
-                                content.status === "active"
-                                  ? "default"
-                                  : "outline"
-                              }
-                              className="text-xs"
-                            >
-                              {content.status}
-                            </Badge>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ✅ Select Device */}
-        <Card className="w-full min-w-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base md:text-lg">Select Group</CardTitle>
-          </CardHeader>
-
-          <CardContent className="p-4 md:p-6">
-            <div className="relative">
-              {/* Mobile scroll hint */}
-              <div className="md:hidden absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs text-muted-foreground border">
-                Scroll →
-              </div>
-              <DataTable
-                data={devicesData}
-                columns={devicecolumns}
-                filters={[{ label: "Name", value: "name" }]}
-                onRowSelectionChange={handleSelectedDevices}
-                maxHeight="40vh"
-              />
-            </div>
-          </CardContent>
-        </Card>
-        {/* </div> */}
-
-        {/* ✅ Date Range Picker */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="space-y-4">
-            <CardTitle className="text-base md:text-lg">
-              Schedule Configuration
-            </CardTitle>
-
-            {/* Mobile: Stacked Layout, Desktop: Horizontal Layout */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
-              {/* Date Selection Section */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">Select Date</span>
-                  <div className="flex items-center space-x-2">
-                    <label className="flex items-center space-x-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={isSingleDay}
-                        onChange={(e) => {
-                          setIsSingleDay(e.target.checked);
-                          if (e.target.checked && startDate)
-                            setEndDate(startDate);
-                        }}
-                        className="rounded"
-                      />
-                      <span>Single Day</span>
-                    </label>
+                      ))
+                    )}
                   </div>
-                </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-                <MyDateRangePicker
-                  startDate={startDate}
-                  setStartDate={setStartDate}
-                  endDate={endDate}
-                  setEndDate={setEndDate}
-                  isSingleDay={isSingleDay}
+          {/* ✅ Select Device */}
+          <Card className="w-full min-w-0">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base md:text-lg">
+                Select Group
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="p-4 md:p-6">
+              <div className="relative">
+                {/* Mobile scroll hint */}
+                <div className="md:hidden absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs text-muted-foreground border">
+                  Scroll →
+                </div>
+                <DataTable
+                  data={devicesData}
+                  columns={devicecolumns}
+                  filters={[{ label: "Name", value: "name" }]}
+                  onRowSelectionChange={handleSelectedDevices}
+                  maxHeight="40vh"
                 />
               </div>
+            </CardContent>
+          </Card>
+          {/* </div> */}
 
-              {/* Plays Selection Section */}
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-medium">
-                  No. of Plays per Day
-                </span>
-                <Select onValueChange={setPlays} defaultValue="360">
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="No. of Plays" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Plays</SelectLabel>
-                      <SelectItem value="360">360</SelectItem>
-                      <SelectItem value="720">720</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* ✅ Date Range Picker */}
+          <Card className="lg:col-span-2">
+            <CardHeader className="space-y-4">
+              <CardTitle className="text-base md:text-lg">
+                Schedule Configuration
+              </CardTitle>
 
-              {/* Advanced Scheduling Card */}
-              <Card className="border-dashed">
-                <CardHeader className="pb-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="advanced-scheduling"
-                          checked={showAdvancedScheduling}
-                          onCheckedChange={(checked) =>
-                            setShowAdvancedScheduling(!!checked)
-                          }
+              {/* Mobile: Stacked Layout, Desktop: Horizontal Layout */}
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
+                {/* Date Selection Section */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm font-medium">Select Date</span>
+                    <div className="flex items-center space-x-2">
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={isSingleDay}
+                          onChange={(e) => {
+                            setIsSingleDay(e.target.checked);
+                            if (e.target.checked && startDate)
+                              setEndDate(startDate);
+                          }}
+                          className="rounded"
                         />
-                        <Label
-                          htmlFor="advanced-scheduling"
-                          className="text-sm font-medium"
-                        >
-                          Advanced Scheduling
-                        </Label>
-                      </div>
-                      <Badge variant="secondary" className="text-xs">
-                        Optional
-                      </Badge>
+                        <span>Single Day</span>
+                      </label>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Configure specific days and time slots for content
-                      playback
-                    </p>
                   </div>
-                </CardHeader>
 
-                {showAdvancedScheduling && (
-                  <CardContent className="space-y-6">
-                    {/* Weekdays Selection */}
-                    <div className="space-y-3">
+                  <MyDateRangePicker
+                    startDate={startDate}
+                    setStartDate={setStartDate}
+                    endDate={endDate}
+                    setEndDate={setEndDate}
+                    isSingleDay={isSingleDay}
+                  />
+                </div>
+
+                {/* Plays Selection Section */}
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-medium">
+                    No. of Plays per Day
+                  </span>
+                  <Select onValueChange={setPlays} defaultValue="360">
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                      <SelectValue placeholder="No. of Plays" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Plays</SelectLabel>
+                        <SelectItem value="360">360</SelectItem>
+                        <SelectItem value="720">720</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Advanced Scheduling Card */}
+                <Card className="border-dashed">
+                  <CardHeader className="pb-3">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium">Weekdays</Label>
-                        <div className="text-xs text-muted-foreground">
-                          {selectedWeekdays.length} day
-                          {selectedWeekdays.length !== 1 ? "s" : ""} selected
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="advanced-scheduling"
+                            checked={showAdvancedScheduling}
+                            onCheckedChange={(checked) =>
+                              setShowAdvancedScheduling(!!checked)
+                            }
+                          />
+                          <Label
+                            htmlFor="advanced-scheduling"
+                            className="text-sm font-medium"
+                          >
+                            Advanced Scheduling
+                          </Label>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          Optional
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Configure specific days and time slots for content
+                        playback
+                      </p>
+                    </div>
+                  </CardHeader>
+
+                  {showAdvancedScheduling && (
+                    <CardContent className="space-y-6">
+                      {/* Weekdays Selection */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium">
+                            Weekdays
+                          </Label>
+                          <div className="text-xs text-muted-foreground">
+                            {selectedWeekdays.length} day
+                            {selectedWeekdays.length !== 1 ? "s" : ""} selected
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                          {weekdayNames.map((day, index) => {
+                            const dayIndex = index; // Use 0-6 format (0=Sunday, 6=Saturday)
+                            const isSelected =
+                              selectedWeekdays.includes(dayIndex);
+                            return (
+                              <Button
+                                key={day}
+                                type="button"
+                                variant={isSelected ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => toggleWeekday(dayIndex)}
+                                className={`h-8 sm:h-10 text-xs font-medium min-w-0 px-1 sm:px-3 ${
+                                  isSelected
+                                    ? "bg-primary text-primary-foreground"
+                                    : "hover:bg-muted"
+                                }`}
+                              >
+                                <span className="hidden sm:inline">
+                                  {day.slice(0, 3)}
+                                </span>
+                                <span className="sm:hidden">
+                                  {day.slice(0, 1)}
+                                </span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+
+                        <div className="flex flex-wrap gap-1 sm:gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedWeekdays([1, 2, 3, 4, 5])}
+                            className="h-7 sm:h-8 text-xs px-2 sm:px-3 flex-1 sm:flex-none min-w-0"
+                          >
+                            Weekdays
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedWeekdays([0, 6])}
+                            className="h-7 sm:h-8 text-xs px-2 sm:px-3 flex-1 sm:flex-none min-w-0"
+                          >
+                            Weekends
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setSelectedWeekdays([0, 1, 2, 3, 4, 5, 6])
+                            }
+                            className="h-7 sm:h-8 text-xs px-2 sm:px-3 flex-1 sm:flex-none min-w-0"
+                          >
+                            All Days
+                          </Button>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                        {weekdayNames.map((day, index) => {
-                          const dayIndex = index; // Use 0-6 format (0=Sunday, 6=Saturday)
-                          const isSelected =
-                            selectedWeekdays.includes(dayIndex);
-                          return (
-                            <Button
-                              key={day}
-                              type="button"
-                              variant={isSelected ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => toggleWeekday(dayIndex)}
-                              className={`h-8 sm:h-10 text-xs font-medium min-w-0 px-1 sm:px-3 ${
-                                isSelected
-                                  ? "bg-primary text-primary-foreground"
-                                  : "hover:bg-muted"
-                              }`}
-                            >
-                              <span className="hidden sm:inline">
-                                {day.slice(0, 3)}
-                              </span>
-                              <span className="sm:hidden">
-                                {day.slice(0, 1)}
-                              </span>
-                            </Button>
-                          );
-                        })}
-                      </div>
-
-                      <div className="flex flex-wrap gap-1 sm:gap-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedWeekdays([1, 2, 3, 4, 5])}
-                          className="h-7 sm:h-8 text-xs px-2 sm:px-3 flex-1 sm:flex-none min-w-0"
-                        >
-                          Weekdays
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedWeekdays([0, 6])}
-                          className="h-7 sm:h-8 text-xs px-2 sm:px-3 flex-1 sm:flex-none min-w-0"
-                        >
-                          Weekends
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setSelectedWeekdays([0, 1, 2, 3, 4, 5, 6])
-                          }
-                          className="h-7 sm:h-8 text-xs px-2 sm:px-3 flex-1 sm:flex-none min-w-0"
-                        >
-                          All Days
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Time Slots */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium">
-                          Time Slots
-                        </Label>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={addTimeSlot}
-                          className="h-8 text-xs"
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          Add Slot
-                        </Button>
-                      </div>
-
+                      {/* Time Slots */}
                       <div className="space-y-3">
-                        {timeSlots.map((slot, index) => (
-                          <div
-                            key={index}
-                            className="border rounded-lg bg-muted/30"
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium">
+                            Time Slots
+                          </Label>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={addTimeSlot}
+                            className="h-8 text-xs"
                           >
-                            {/* Mobile Layout */}
-                            <div className="sm:hidden p-3 space-y-3">
-                              <div className="flex items-center justify-between">
-                                <Badge variant="outline" className="text-xs">
-                                  Slot {index + 1}
-                                </Badge>
-                                {timeSlots.length > 1 && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeTimeSlot(index)}
-                                    className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                )}
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add Slot
+                          </Button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {timeSlots.map((slot, index) => (
+                            <div
+                              key={index}
+                              className="border rounded-lg bg-muted/30"
+                            >
+                              {/* Mobile Layout */}
+                              <div className="sm:hidden p-3 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <Badge variant="outline" className="text-xs">
+                                    Slot {index + 1}
+                                  </Badge>
+                                  {timeSlots.length > 1 && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removeTimeSlot(index)}
+                                      className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">
+                                      Start Time
+                                    </Label>
+                                    <Input
+                                      type="time"
+                                      value={slot.start}
+                                      onChange={(e) =>
+                                        updateTimeSlot(
+                                          index,
+                                          "start",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-full h-9"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">
+                                      End Time
+                                    </Label>
+                                    <Input
+                                      type="time"
+                                      value={slot.end}
+                                      onChange={(e) =>
+                                        updateTimeSlot(
+                                          index,
+                                          "end",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-full h-9"
+                                    />
+                                  </div>
+                                </div>
                               </div>
 
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <Label className="text-xs text-muted-foreground">
-                                    Start Time
-                                  </Label>
-                                  <Input
-                                    type="time"
-                                    value={slot.start}
-                                    onChange={(e) =>
-                                      updateTimeSlot(
-                                        index,
-                                        "start",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className="w-full h-9"
-                                  />
+                              {/* Desktop Layout */}
+                              <div className="hidden sm:flex items-center gap-3 p-3">
+                                <div className="flex items-center gap-2 flex-1">
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">
+                                      Start
+                                    </Label>
+                                    <Input
+                                      type="time"
+                                      value={slot.start}
+                                      onChange={(e) =>
+                                        updateTimeSlot(
+                                          index,
+                                          "start",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-28 h-8"
+                                    />
+                                  </div>
+                                  <div className="flex items-center justify-center pt-5">
+                                    <span className="text-sm text-muted-foreground">
+                                      →
+                                    </span>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">
+                                      End
+                                    </Label>
+                                    <Input
+                                      type="time"
+                                      value={slot.end}
+                                      onChange={(e) =>
+                                        updateTimeSlot(
+                                          index,
+                                          "end",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-28 h-8"
+                                    />
+                                  </div>
                                 </div>
-                                <div className="space-y-1">
-                                  <Label className="text-xs text-muted-foreground">
-                                    End Time
-                                  </Label>
-                                  <Input
-                                    type="time"
-                                    value={slot.end}
-                                    onChange={(e) =>
-                                      updateTimeSlot(
-                                        index,
-                                        "end",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className="w-full h-9"
-                                  />
+
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    Slot {index + 1}
+                                  </Badge>
+                                  {timeSlots.length > 1 && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removeTimeSlot(index)}
+                                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             </div>
+                          ))}
+                        </div>
 
-                            {/* Desktop Layout */}
-                            <div className="hidden sm:flex items-center gap-3 p-3">
-                              <div className="flex items-center gap-2 flex-1">
-                                <div className="space-y-1">
-                                  <Label className="text-xs text-muted-foreground">
-                                    Start
-                                  </Label>
-                                  <Input
-                                    type="time"
-                                    value={slot.start}
-                                    onChange={(e) =>
-                                      updateTimeSlot(
-                                        index,
-                                        "start",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className="w-28 h-8"
-                                  />
-                                </div>
-                                <div className="flex items-center justify-center pt-5">
-                                  <span className="text-sm text-muted-foreground">
-                                    →
-                                  </span>
-                                </div>
-                                <div className="space-y-1">
-                                  <Label className="text-xs text-muted-foreground">
-                                    End
-                                  </Label>
-                                  <Input
-                                    type="time"
-                                    value={slot.end}
-                                    onChange={(e) =>
-                                      updateTimeSlot(
-                                        index,
-                                        "end",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className="w-28 h-8"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-xs">
-                                  Slot {index + 1}
-                                </Badge>
-                                {timeSlots.length > 1 && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeTimeSlot(index)}
-                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setTimeSlots([{ start: "09:00", end: "17:00" }])
+                            }
+                            className="h-8 text-xs justify-center"
+                          >
+                            Business Hours
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setTimeSlots([
+                                { start: "06:00", end: "10:00" },
+                                { start: "18:00", end: "22:00" },
+                              ])
+                            }
+                            className="h-8 text-xs justify-center"
+                          >
+                            Peak Hours
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setTimeSlots([{ start: "00:00", end: "23:59" }])
+                            }
+                            className="h-8 text-xs justify-center"
+                          >
+                            All Day
+                          </Button>
+                        </div>
                       </div>
+                    </CardContent>
+                  )}
+                </Card>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setTimeSlots([{ start: "09:00", end: "17:00" }])
-                          }
-                          className="h-8 text-xs justify-center"
-                        >
-                          Business Hours
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setTimeSlots([
-                              { start: "06:00", end: "10:00" },
-                              { start: "18:00", end: "22:00" },
-                            ])
-                          }
-                          className="h-8 text-xs justify-center"
-                        >
-                          Peak Hours
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setTimeSlots([{ start: "00:00", end: "23:59" }])
-                          }
-                          className="h-8 text-xs justify-center"
-                        >
-                          All Day
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                )}
-              </Card>
-
-              {/* Schedule Button */}
-              <div className="flex justify-end lg:justify-start">
-                <Button
-                  size="lg"
-                  onClick={handleScheduleContent}
-                  disabled={
-                    selectedDevices.length < 1 ||
-                    (contentType === "ad" && !selectedAd) ||
-                    (contentType === "carousel" && !selectedCarousel) ||
-                    (contentType === "live_content" && !selectedLiveContent) ||
-                    !startDate ||
-                    !endDate
-                  }
-                  className="w-full sm:w-auto"
-                >
-                  Schedule{" "}
-                  {contentType === "ad"
-                    ? "Ad"
-                    : contentType === "carousel"
-                      ? "Carousel"
-                      : "Live Content"}
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent>
-            <div className="bg-muted/30 rounded-lg p-4">
-              <h4 className="text-sm font-medium mb-2">Schedule Summary</h4>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {(contentType === "ad" && selectedAd) ||
-                (contentType === "carousel" && selectedCarousel) ||
-                (contentType === "live_content" && selectedLiveContent) ? (
-                  <span>
-                    <span className="font-semibold text-foreground">
-                      {contentType === "ad"
-                        ? selectedAd?.name
-                        : contentType === "carousel"
-                          ? selectedCarousel?.name
-                          : selectedLiveContent?.name}
-                    </span>{" "}
-                    (
+                {/* Schedule Button */}
+                <div className="flex justify-end lg:justify-start">
+                  <Button
+                    size="lg"
+                    onClick={handleScheduleContent}
+                    disabled={
+                      selectedDevices.length < 1 ||
+                      (contentType === "ad" && !selectedAd) ||
+                      (contentType === "carousel" && !selectedCarousel) ||
+                      (contentType === "live_content" &&
+                        !selectedLiveContent) ||
+                      !startDate ||
+                      !endDate
+                    }
+                    className="w-full sm:w-auto"
+                  >
+                    Schedule{" "}
                     {contentType === "ad"
                       ? "Ad"
                       : contentType === "carousel"
                         ? "Carousel"
                         : "Live Content"}
-                    ) will be scheduled for{" "}
-                    <span className="font-semibold text-foreground">
-                      {plays}
-                    </span>{" "}
-                    plays per day on{" "}
-                    <span className="font-semibold text-foreground">
-                      {selectedDevices.length}
-                    </span>{" "}
-                    group{selectedDevices.length !== 1 ? "s" : ""} for{" "}
-                    <span className="font-semibold text-foreground">
-                      {totalDays}
-                    </span>{" "}
-                    {totalDays === 1 ? "day" : "days"}
-                    {showAdvancedScheduling && (
-                      <>
-                        {" "}
-                        on{" "}
-                        <span className="font-semibold text-foreground">
-                          {selectedWeekdays
-                            .map((d) => weekdayNames[d].slice(0, 3))
-                            .join(", ")}
-                        </span>{" "}
-                        during{" "}
-                        <span className="font-semibold text-foreground">
-                          {timeSlots
-                            .map((slot) => `${slot.start}-${slot.end}`)
-                            .join(", ")}
-                        </span>
-                      </>
-                    )}
-                    .
-                  </span>
-                ) : (
-                  `Please select ${contentType === "ad" ? "an ad" : contentType === "carousel" ? "a carousel" : "live content"}, device group(s), and date range to see the schedule summary.`
-                )}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              <div className="bg-muted/30 rounded-lg p-4">
+                <h4 className="text-sm font-medium mb-2">Schedule Summary</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {(contentType === "ad" && selectedAd) ||
+                  (contentType === "carousel" && selectedCarousel) ||
+                  (contentType === "live_content" && selectedLiveContent) ? (
+                    <span>
+                      <span className="font-semibold text-foreground">
+                        {contentType === "ad"
+                          ? selectedAd?.name
+                          : contentType === "carousel"
+                            ? selectedCarousel?.name
+                            : selectedLiveContent?.name}
+                      </span>{" "}
+                      (
+                      {contentType === "ad"
+                        ? "Ad"
+                        : contentType === "carousel"
+                          ? "Carousel"
+                          : "Live Content"}
+                      ) will be scheduled for{" "}
+                      <span className="font-semibold text-foreground">
+                        {plays}
+                      </span>{" "}
+                      plays per day on{" "}
+                      <span className="font-semibold text-foreground">
+                        {selectedDevices.length}
+                      </span>{" "}
+                      group{selectedDevices.length !== 1 ? "s" : ""} for{" "}
+                      <span className="font-semibold text-foreground">
+                        {totalDays}
+                      </span>{" "}
+                      {totalDays === 1 ? "day" : "days"}
+                      {showAdvancedScheduling && (
+                        <>
+                          {" "}
+                          on{" "}
+                          <span className="font-semibold text-foreground">
+                            {selectedWeekdays
+                              .map((d) => weekdayNames[d].slice(0, 3))
+                              .join(", ")}
+                          </span>{" "}
+                          during{" "}
+                          <span className="font-semibold text-foreground">
+                            {timeSlots
+                              .map((slot) => `${slot.start}-${slot.end}`)
+                              .join(", ")}
+                          </span>
+                        </>
+                      )}
+                      .
+                    </span>
+                  ) : (
+                    `Please select ${contentType === "ad" ? "an ad" : contentType === "carousel" ? "a carousel" : "live content"}, device group(s), and date range to see the schedule summary.`
+                  )}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      {contentType === "screen_layouts" && <ScheduleAddPage />}
     </div>
   );
 }

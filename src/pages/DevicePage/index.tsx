@@ -38,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 interface Device {
   device_id: string;
@@ -223,7 +224,7 @@ function DevicePage() {
       // Send only changed fields
       const response = await api.post(
         `/device/update/location/${device?.device_id}`,
-        updatedData
+        updatedData,
       );
 
       // Update local data and exit edit mode
@@ -239,232 +240,423 @@ function DevicePage() {
   };
 
   // Export function
+  // const handleExport = async () => {
+  //   try {
+  //     setIsExporting(true);
+
+  //     let url = "device/proof-of-play/export";
+  //     const params = new URLSearchParams();
+
+  //     // Handle different filter types
+  //     if (
+  //       exportFilter === "today" ||
+  //       exportFilter === "yesterday" ||
+  //       exportFilter === "full"
+  //     ) {
+  //       params.append("filter", exportFilter);
+  //     } else if (exportFilter === "date_range") {
+  //       // Date range export
+  //       if (exportStartDate) params.append("start_date", exportStartDate);
+  //       if (exportEndDate) params.append("end_date", exportEndDate);
+  //     }
+
+  //     // Always add the current device_id since it's mandatory
+  //     if (device_id) {
+  //       params.append("device_id", device_id);
+  //     }
+
+  //     // Build final URL
+  //     if (params.toString()) {
+  //       url += `?${params.toString()}`;
+  //     }
+
+  //     // Make API call to download file
+  //     const response = await api.get(url, {
+  //       responseType: "blob",
+  //     });
+
+  //     // Create download link
+  //     const blob = new Blob([response as any], {
+  //       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  //     });
+  //     const downloadUrl = window.URL.createObjectURL(blob);
+  //     const link = document.createElement("a");
+  //     link.href = downloadUrl;
+
+  //     // Generate filename based on filter
+  //     let filename = "proof-of-play-export";
+  //     if (exportFilter === "today") filename += "-today";
+  //     else if (exportFilter === "yesterday") filename += "-yesterday";
+  //     else if (exportFilter === "full") filename += "-full";
+  //     else if (exportFilter === "date_range")
+  //       filename += `-${exportStartDate}-to-${exportEndDate}`;
+
+  //     if (device_id) filename += `-device-${device_id}`;
+  //     filename += ".xlsx";
+
+  //     link.download = filename;
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //     window.URL.revokeObjectURL(downloadUrl);
+
+  //     setExportDialogOpen(false);
+
+  //     // Reset form
+  //     setExportFilter("today");
+  //     setExportStartDate("");
+  //     setExportEndDate("");
+  //   } catch (error) {
+  //     console.error("Export failed:", error);
+  //     alert("Export failed. Please try again.");
+  //   } finally {
+  //     setIsExporting(false);
+  //   }
+  // };
+
   const handleExport = async () => {
     try {
       setIsExporting(true);
 
-      let url = "device/proof-of-play/export";
-      const params = new URLSearchParams();
+      let startDate = "";
+      let endDate = "";
 
-      // Handle different filter types
-      if (
-        exportFilter === "today" ||
-        exportFilter === "yesterday" ||
-        exportFilter === "full"
-      ) {
-        params.append("filter", exportFilter);
-      } else if (exportFilter === "date_range") {
-        // Date range export
-        if (exportStartDate) params.append("start_date", exportStartDate);
-        if (exportEndDate) params.append("end_date", exportEndDate);
+      const today = new Date();
+
+      if (exportFilter === "today") {
+        startDate = today.toISOString().split("T")[0];
+        endDate = startDate;
       }
 
-      // Always add the current device_id since it's mandatory
-      if (device_id) {
-        params.append("device_id", device_id);
+      if (exportFilter === "yesterday") {
+        const d = new Date();
+        d.setDate(today.getDate() - 1);
+        startDate = d.toISOString().split("T")[0];
+        endDate = startDate;
       }
 
-      // Build final URL
-      if (params.toString()) {
-        url += `?${params.toString()}`;
+      if (exportFilter === "full") {
+        startDate = "2025-03-01";
+        endDate = today.toISOString().split("T")[0];
       }
 
-      // Make API call to download file
-      const response = await api.get(url, {
-        responseType: "blob",
-      });
+      if (exportFilter === "date_range") {
+        startDate = exportStartDate;
+        endDate = exportEndDate;
+      }
 
-      // Create download link
-      const blob = new Blob([response as any], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
+      const payload = {
+        job_type: "PROOF_OF_PLAY",
+        device_id: device_id,
+        start_date: startDate,
+        end_date: endDate,
+      };
 
-      // Generate filename based on filter
-      let filename = "proof-of-play-export";
-      if (exportFilter === "today") filename += "-today";
-      else if (exportFilter === "yesterday") filename += "-yesterday";
-      else if (exportFilter === "full") filename += "-full";
-      else if (exportFilter === "date_range")
-        filename += `-${exportStartDate}-to-${exportEndDate}`;
-
-      if (device_id) filename += `-device-${device_id}`;
-      filename += ".xlsx";
-
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      await api.post("/exports", payload);
 
       setExportDialogOpen(false);
 
-      // Reset form
       setExportFilter("today");
       setExportStartDate("");
       setExportEndDate("");
+
+      toast.success("Export job created successfully!");
+      navigate("/all-exports");
     } catch (error) {
-      console.error("Export failed:", error);
-      alert("Export failed. Please try again.");
+      console.error("Export job failed:", error);
+      toast.error(error?.message || "Export job failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
   };
 
   // Handle Event Logs export
+  // const handleEventLogsExport = async () => {
+  //   try {
+  //     setIsEventLogsExporting(true);
+
+  //     let url = "/device/event-logs/export";
+  //     const params = new URLSearchParams();
+
+  //     // Handle different filter types
+  //     if (
+  //       eventLogsExportFilter === "today" ||
+  //       eventLogsExportFilter === "yesterday" ||
+  //       eventLogsExportFilter === "full"
+  //     ) {
+  //       params.append("filter", eventLogsExportFilter);
+  //     } else if (eventLogsExportFilter === "date_range") {
+  //       // Date range export
+  //       if (eventLogsExportStartDate)
+  //         params.append("start_date", eventLogsExportStartDate);
+  //       if (eventLogsExportEndDate)
+  //         params.append("end_date", eventLogsExportEndDate);
+  //     }
+
+  //     // Always add the current device_id since it's mandatory
+  //     if (device_id) {
+  //       params.append("device_id", device_id);
+  //     }
+
+  //     if (params.toString()) {
+  //       url += `?${params.toString()}`;
+  //     }
+
+  //     const response = await api.get(url, {
+  //       responseType: "blob",
+  //     });
+
+  //     const blob = new Blob([response as any], {
+  //       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  //     });
+  //     const downloadUrl = window.URL.createObjectURL(blob);
+  //     const link = document.createElement("a");
+  //     link.href = downloadUrl;
+
+  //     // Generate filename based on filter
+  //     let filename = "event-logs-export";
+  //     if (eventLogsExportFilter === "today") filename += "-today";
+  //     else if (eventLogsExportFilter === "yesterday") filename += "-yesterday";
+  //     else if (eventLogsExportFilter === "full") filename += "-full";
+  //     else if (eventLogsExportFilter === "date_range")
+  //       filename += `-${eventLogsExportStartDate}-to-${eventLogsExportEndDate}`;
+
+  //     if (device_id) filename += `-device-${device_id}`;
+  //     filename += ".xlsx";
+
+  //     link.download = filename;
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //     window.URL.revokeObjectURL(downloadUrl);
+
+  //     setEventLogsExportDialogOpen(false);
+
+  //     // Reset form
+  //     setEventLogsExportFilter("today");
+  //     setEventLogsExportStartDate("");
+  //     setEventLogsExportEndDate("");
+  //   } catch (error) {
+  //     console.error("Event Logs export failed:", error);
+  //     alert("Event Logs export failed. Please try again.");
+  //   } finally {
+  //     setIsEventLogsExporting(false);
+  //   }
+  // };
+
   const handleEventLogsExport = async () => {
     try {
       setIsEventLogsExporting(true);
 
-      let url = "/device/event-logs/export";
-      const params = new URLSearchParams();
+      let startDate = "";
+      let endDate = "";
 
-      // Handle different filter types
-      if (
-        eventLogsExportFilter === "today" ||
-        eventLogsExportFilter === "yesterday" ||
-        eventLogsExportFilter === "full"
-      ) {
-        params.append("filter", eventLogsExportFilter);
-      } else if (eventLogsExportFilter === "date_range") {
-        // Date range export
-        if (eventLogsExportStartDate)
-          params.append("start_date", eventLogsExportStartDate);
-        if (eventLogsExportEndDate)
-          params.append("end_date", eventLogsExportEndDate);
+      const today = new Date();
+
+      if (eventLogsExportFilter === "today") {
+        startDate = today.toISOString().split("T")[0];
+        endDate = startDate;
       }
 
-      // Always add the current device_id since it's mandatory
-      if (device_id) {
-        params.append("device_id", device_id);
+      if (eventLogsExportFilter === "yesterday") {
+        const d = new Date();
+        d.setDate(today.getDate() - 1);
+        startDate = d.toISOString().split("T")[0];
+        endDate = startDate;
       }
 
-      if (params.toString()) {
-        url += `?${params.toString()}`;
+      if (eventLogsExportFilter === "full") {
+        startDate = "2025-03-01";
+        endDate = today.toISOString().split("T")[0];
       }
 
-      const response = await api.get(url, {
-        responseType: "blob",
-      });
+      if (eventLogsExportFilter === "date_range") {
+        startDate = eventLogsExportStartDate;
+        endDate = eventLogsExportEndDate;
+      }
 
-      const blob = new Blob([response as any], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
+      const payload = {
+        job_type: "DEVICE_EVENTS",
+        device_id: device_id,
+        start_date: startDate,
+        end_date: endDate,
+      };
 
-      // Generate filename based on filter
-      let filename = "event-logs-export";
-      if (eventLogsExportFilter === "today") filename += "-today";
-      else if (eventLogsExportFilter === "yesterday") filename += "-yesterday";
-      else if (eventLogsExportFilter === "full") filename += "-full";
-      else if (eventLogsExportFilter === "date_range")
-        filename += `-${eventLogsExportStartDate}-to-${eventLogsExportEndDate}`;
-
-      if (device_id) filename += `-device-${device_id}`;
-      filename += ".xlsx";
-
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      await api.post("/exports", payload);
 
       setEventLogsExportDialogOpen(false);
 
-      // Reset form
       setEventLogsExportFilter("today");
       setEventLogsExportStartDate("");
       setEventLogsExportEndDate("");
+
+      toast.success("Event logs export job created!");
+      navigate("/all-exports");
     } catch (error) {
-      console.error("Event Logs export failed:", error);
-      alert("Event Logs export failed. Please try again.");
+      console.error("Event logs export failed:", error);
+      toast.error(error.message || "Export job failed.");
     } finally {
       setIsEventLogsExporting(false);
     }
   };
 
   // Handle Full Device Details export
+  // const handleFullDeviceExport = async () => {
+  //   try {
+  //     setIsFullDeviceExporting(true);
+
+  //     let url = `/device/${device_id}/export-full-details`;
+  //     const params = new URLSearchParams();
+
+  //     // Handle different filter types
+  //     if (
+  //       fullDeviceExportFilter === "today" ||
+  //       fullDeviceExportFilter === "yesterday" ||
+  //       fullDeviceExportFilter === "week" ||
+  //       fullDeviceExportFilter === "month" ||
+  //       fullDeviceExportFilter === "year" ||
+  //       fullDeviceExportFilter === "all"
+  //     ) {
+  //       params.append("filter", fullDeviceExportFilter);
+  //     } else if (fullDeviceExportFilter === "date_range") {
+  //       // Date range export
+  //       if (fullDeviceExportStartDate)
+  //         params.append("start_date", fullDeviceExportStartDate);
+  //       if (fullDeviceExportEndDate)
+  //         params.append("end_date", fullDeviceExportEndDate);
+  //     }
+
+  //     if (params.toString()) {
+  //       url += `?${params.toString()}`;
+  //     }
+
+  //     const response = await api.get(url, {
+  //       responseType: "blob",
+  //     });
+
+  //     const blob = new Blob([response as any], {
+  //       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  //     });
+  //     const downloadUrl = window.URL.createObjectURL(blob);
+  //     const link = document.createElement("a");
+  //     link.href = downloadUrl;
+
+  //     // Generate filename based on filter
+  //     let filename = "full-device-details";
+  //     if (fullDeviceExportFilter === "today") filename += "-today";
+  //     else if (fullDeviceExportFilter === "yesterday") filename += "-yesterday";
+  //     else if (fullDeviceExportFilter === "week") filename += "-week";
+  //     else if (fullDeviceExportFilter === "month") filename += "-month";
+  //     else if (fullDeviceExportFilter === "year") filename += "-year";
+  //     else if (fullDeviceExportFilter === "all") filename += "-all";
+  //     else if (fullDeviceExportFilter === "date_range")
+  //       filename += `-${fullDeviceExportStartDate}-to-${fullDeviceExportEndDate}`;
+
+  //     const deviceName = device?.device_name || "unknown-device";
+  //     const sanitizedDeviceName = deviceName.replace(/[^a-zA-Z0-9-_]/g, "-");
+  //     filename += `-${sanitizedDeviceName}.xlsx`;
+
+  //     link.download = filename;
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //     window.URL.revokeObjectURL(downloadUrl);
+
+  //     setFullDeviceExportDialogOpen(false);
+
+  //     // Reset form
+  //     setFullDeviceExportFilter("today");
+  //     setFullDeviceExportStartDate("");
+  //     setFullDeviceExportEndDate("");
+
+  //     console.log("✅ Full device details exported successfully");
+  //   } catch (error) {
+  //     console.error("Full device details export failed:", error);
+  //     alert("Full device details export failed. Please try again.");
+  //   } finally {
+  //     setIsFullDeviceExporting(false);
+  //   }
+  // };
+
   const handleFullDeviceExport = async () => {
     try {
       setIsFullDeviceExporting(true);
 
-      let url = `/device/${device_id}/export-full-details`;
-      const params = new URLSearchParams();
+      let startDate = "";
+      let endDate = "";
 
-      // Handle different filter types
-      if (
-        fullDeviceExportFilter === "today" ||
-        fullDeviceExportFilter === "yesterday" ||
-        fullDeviceExportFilter === "week" ||
-        fullDeviceExportFilter === "month" ||
-        fullDeviceExportFilter === "year" ||
-        fullDeviceExportFilter === "all"
-      ) {
-        params.append("filter", fullDeviceExportFilter);
-      } else if (fullDeviceExportFilter === "date_range") {
-        // Date range export
-        if (fullDeviceExportStartDate)
-          params.append("start_date", fullDeviceExportStartDate);
-        if (fullDeviceExportEndDate)
-          params.append("end_date", fullDeviceExportEndDate);
+      const today = new Date();
+
+      if (fullDeviceExportFilter === "today") {
+        startDate = today.toISOString().split("T")[0];
+        endDate = startDate;
       }
 
-      if (params.toString()) {
-        url += `?${params.toString()}`;
+      if (fullDeviceExportFilter === "yesterday") {
+        const d = new Date();
+        d.setDate(today.getDate() - 1);
+        startDate = d.toISOString().split("T")[0];
+        endDate = startDate;
       }
 
-      const response = await api.get(url, {
-        responseType: "blob",
-      });
+      if (fullDeviceExportFilter === "week") {
+        const start = new Date();
+        start.setDate(today.getDate() - 7);
 
-      const blob = new Blob([response as any], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
+        startDate = start.toISOString().split("T")[0];
+        endDate = today.toISOString().split("T")[0];
+      }
 
-      // Generate filename based on filter
-      let filename = "full-device-details";
-      if (fullDeviceExportFilter === "today") filename += "-today";
-      else if (fullDeviceExportFilter === "yesterday") filename += "-yesterday";
-      else if (fullDeviceExportFilter === "week") filename += "-week";
-      else if (fullDeviceExportFilter === "month") filename += "-month";
-      else if (fullDeviceExportFilter === "year") filename += "-year";
-      else if (fullDeviceExportFilter === "all") filename += "-all";
-      else if (fullDeviceExportFilter === "date_range")
-        filename += `-${fullDeviceExportStartDate}-to-${fullDeviceExportEndDate}`;
+      if (fullDeviceExportFilter === "month") {
+        const start = new Date();
+        start.setMonth(today.getMonth() - 1);
 
-      const deviceName = device?.device_name || "unknown-device";
-      const sanitizedDeviceName = deviceName.replace(/[^a-zA-Z0-9-_]/g, "-");
-      filename += `-${sanitizedDeviceName}.xlsx`;
+        startDate = start.toISOString().split("T")[0];
+        endDate = today.toISOString().split("T")[0];
+      }
 
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      if (fullDeviceExportFilter === "year") {
+        const start = new Date();
+        start.setFullYear(today.getFullYear() - 1);
+
+        startDate = start.toISOString().split("T")[0];
+        endDate = today.toISOString().split("T")[0];
+      }
+
+      if (fullDeviceExportFilter === "all") {
+        startDate = "2025-03-01";
+        endDate = today.toISOString().split("T")[0];
+      }
+
+      if (fullDeviceExportFilter === "date_range") {
+        startDate = fullDeviceExportStartDate;
+        endDate = fullDeviceExportEndDate;
+      }
+
+      const payload = {
+        job_type: "PROOF_OF_PLAY",
+        device_id: device_id,
+        start_date: startDate,
+        end_date: endDate,
+      };
+
+      await api.post("/exports", payload);
 
       setFullDeviceExportDialogOpen(false);
 
-      // Reset form
       setFullDeviceExportFilter("today");
       setFullDeviceExportStartDate("");
       setFullDeviceExportEndDate("");
 
-      console.log("✅ Full device details exported successfully");
+      toast.success("Full device export job created!");
+      navigate("/all-exports");
     } catch (error) {
-      console.error("Full device details export failed:", error);
-      alert("Full device details export failed. Please try again.");
+      console.error("Full device export failed:", error);
+      toast.error(error.message || "Export job failed.");
     } finally {
       setIsFullDeviceExporting(false);
     }
   };
-
   useEffect(() => {
     if (!device_id) return;
 
@@ -473,7 +665,7 @@ function DevicePage() {
       try {
         // Fetch device details and schedules
         const deviceDetailsResponse: DeviceDetailsResponse = await api.get(
-          `/device/${device_id}?page=${schedulesPage}&limit=${schedulesLimit}`
+          `/device/${device_id}?page=${schedulesPage}&limit=${schedulesLimit}`,
         );
         setEditedDevice(deviceDetailsResponse.device);
         setDevice(deviceDetailsResponse.device);
@@ -484,7 +676,7 @@ function DevicePage() {
         // Fetch proof of play logs
         const proofOfPlayResponse: PaginatedResponse<ProofOfPlayLog> =
           await api.get(
-            `/device/${device_id}/proof-of-play-logs?page=${proofOfPlayPage}&limit=${proofOfPlayLimit}`
+            `/device/${device_id}/proof-of-play-logs?page=${proofOfPlayPage}&limit=${proofOfPlayLimit}`,
           );
         setProofOfPlayLogs(proofOfPlayResponse.data || []);
         setProofOfPlayTotal(proofOfPlayResponse.total);
@@ -493,7 +685,7 @@ function DevicePage() {
         // Fetch device event logs
         const eventLogsResponse: PaginatedResponse<DeviceEventLog> =
           await api.get(
-            `/device/${device_id}/event-logs?page=${eventLogsPage}&limit=${eventLogsLimit}`
+            `/device/${device_id}/event-logs?page=${eventLogsPage}&limit=${eventLogsLimit}`,
           );
         setDeviceEventLogs(eventLogsResponse.data || []);
         setEventLogsTotal(eventLogsResponse.total);
@@ -502,7 +694,7 @@ function DevicePage() {
         // Fetch device telemetry
         const telemetryResponse: PaginatedResponse<DeviceTelemetry> =
           await api.get(
-            `/device/${device_id}/telemetry-logs?page=${terminologyPage}&limit=${terminologyLimit}`
+            `/device/${device_id}/telemetry-logs?page=${terminologyPage}&limit=${terminologyLimit}`,
           );
         setDeviceTelemetry(telemetryResponse.data || []);
         setTerminologyTotal(telemetryResponse.total);
@@ -724,8 +916,8 @@ function DevicePage() {
                       device.registration_status === "pending"
                         ? "bg-yellow-100 text-yellow-800"
                         : device.registration_status === "approved"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
                     }`}
                   >
                     {device.registration_status}
@@ -1002,11 +1194,13 @@ function DevicePage() {
                 </span>
               </div>
             </CardHeader>
-            <CardContent   className="
+            <CardContent
+              className="
   max-w-[350px]
   md:max-w-[calc(100vw-20rem)]
   relative
-">
+"
+            >
               {schedules.length > 0 ? (
                 <>
                   <div className="overflow-x-auto">
@@ -1049,7 +1243,7 @@ function DevicePage() {
                               {Math.round(
                                 (new Date(schedule.end_time).getTime() -
                                   new Date(schedule.start_time).getTime()) /
-                                  (1000 * 60)
+                                  (1000 * 60),
                               )}{" "}
                               min
                             </TableCell>
@@ -1237,11 +1431,13 @@ function DevicePage() {
                 </span>
               </div>
             </CardHeader>
-            <CardContent   className="
+            <CardContent
+              className="
   max-w-[350px]
   md:max-w-[calc(100vw-20rem)]
   relative
-">
+"
+            >
               {proofOfPlayLogs.length > 0 ? (
                 <>
                   <div className="overflow-x-auto">
@@ -1301,7 +1497,7 @@ function DevicePage() {
                       Showing {(proofOfPlayPage - 1) * proofOfPlayLimit + 1} to{" "}
                       {Math.min(
                         proofOfPlayPage * proofOfPlayLimit,
-                        proofOfPlayTotal
+                        proofOfPlayTotal,
                       )}{" "}
                       of {proofOfPlayTotal} entries
                     </div>
@@ -1478,11 +1674,13 @@ function DevicePage() {
                 </span>
               </div>
             </CardHeader>
-            <CardContent   className="
+            <CardContent
+              className="
   max-w-[350px]
   md:max-w-[calc(100vw-20rem)]
   relative
-">
+"
+            >
               {deviceEventLogs.length > 0 ? (
                 <>
                   <div className="overflow-x-auto">
@@ -1517,14 +1715,14 @@ function DevicePage() {
                                         return JSON.stringify(
                                           log.payload,
                                           null,
-                                          2
+                                          2,
                                         );
                                       }
                                       // If payload is a string, try to parse and format it
                                       return JSON.stringify(
                                         JSON.parse(log.payload),
                                         null,
-                                        2
+                                        2,
                                       );
                                     } catch {
                                       // If all else fails, convert to string
@@ -1608,11 +1806,13 @@ function DevicePage() {
                 <span className="text-sm text-muted-foreground">per page</span>
               </div>
             </CardHeader>
-            <CardContent   className="
+            <CardContent
+              className="
   max-w-[350px]
   md:max-w-[calc(100vw-20rem)]
   relative
-">
+"
+            >
               {deviceTelemetry.length > 0 ? (
                 <>
                   <div className="overflow-x-auto">
@@ -1662,7 +1862,7 @@ function DevicePage() {
                       Showing {(terminologyPage - 1) * terminologyLimit + 1} to{" "}
                       {Math.min(
                         terminologyPage * terminologyLimit,
-                        terminologyTotal
+                        terminologyTotal,
                       )}{" "}
                       of {terminologyTotal} entries
                     </div>

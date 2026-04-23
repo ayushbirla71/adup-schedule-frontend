@@ -77,13 +77,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, []);
 
   // Convert string icon names from backend to actual components and compute isActive
+  // const navMain = React.useMemo(() => {
+  //   if (!rawData || !Array.isArray(rawData.navMain)) return [];
+  //   return rawData.navMain.map((item) => ({
+  //     ...item,
+  //     isActive: location.pathname.startsWith(item.url),
+  //     icon: iconMap[item.icon] || SquareTerminal,
+  //   }));
+  // }, [rawData, location.pathname]);
   const navMain = React.useMemo(() => {
     if (!rawData || !Array.isArray(rawData.navMain)) return [];
-    return rawData.navMain.map((item) => ({
-      ...item,
-      isActive: location.pathname.startsWith(item.url),
-      icon: iconMap[item.icon] || SquareTerminal,
-    }));
+
+    return rawData.navMain.map((item) => {
+      const isParentActive = location.pathname.startsWith(item.url);
+
+      const updatedItems = item.items?.map((sub) => ({
+        ...sub,
+        isActive: location.pathname === sub.url,
+      }));
+
+      return {
+        ...item,
+        isActive: isParentActive,
+        items: updatedItems,
+        icon: iconMap[item.icon] || SquareTerminal,
+      };
+    });
   }, [rawData, location.pathname]);
 
   return (

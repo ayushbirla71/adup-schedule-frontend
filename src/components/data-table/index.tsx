@@ -58,7 +58,7 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -91,7 +91,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className="flex flex-col h-full">
       {/* Filters */}
-      <div className="flex flex-row items-center space-x-4 overflow-x-auto pb-4 flex-shrink-0">
+      <div className="flex flex-col gap-4 md:flex-row  overflow-x-auto pb-4 flex-shrink-0">
         {filters?.map((filter) => (
           <div className="flex items-center " key={filter.value}>
             <Input
@@ -120,10 +120,7 @@ export function DataTable<TData, TValue>({
         } min-h-0`}
       >
         <div className="h-full overflow-auto overflow-y-auto">
-          <Table
-            className="text-sm"
-
-          >
+          <Table className="text-sm">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
@@ -137,7 +134,7 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   ))}
@@ -159,7 +156,7 @@ export function DataTable<TData, TValue>({
                       <TableCell key={cell.id} className="">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
